@@ -1,0 +1,30 @@
+debug: false
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: notification-service
+  config:
+    import: optional:file:../infra/env/.env[.properties]
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+# ===================================================
+# 外部API連携設定 (LINE WORKS)
+# ===================================================
+app:
+  line-works:
+    base-url: ${LW_BASE_URL:}
+    client-id: ${LW_CLIENT_ID:}
+    client-secret: ${LW_CLIENT_SECRET:}
+    service-account: ${LW_SERVICE_ACCOUNT:}
+    private-key: ${LW_PRIVATE_KEY_PATH:}
+    bot-id: ${LW_BOT_ID:}
+    alert-channel-id: ${LW_ALERT_CHANNEL_ID:}
+    system-manager-id: ${LW_APP_SYSTEM_MANAGER:}
+
+logging:
+  level:
+    com.computer_rescuer.notification: ${LOG_LEVEL_APP_ROOT:INFO}
+    
