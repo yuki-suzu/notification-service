@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    # 単体テストは一瞬で終わらせるため、H2の「PostgreSQL互換モード」を使う
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  flyway:
+    enabled: true # テスト実行前にH2内にテーブルを作る
+  jooq:
+    sql-dialect: h2
+
+app:
+  hermos:
+    # 単体テストでは絶対に本物のAPIを叩かないよう、ダミーURLにする
+    base-url: "http://localhost:8080/mock-hermos"
+    api-token: "dummy-token"
+  lineworks:
+    base-url: "http://localhost:8080/mock-lineworks"
+    client-id: "dummy"
+    client-secret: "dummy"
+    service-account: "dummy"
+    private-key: "dummy"

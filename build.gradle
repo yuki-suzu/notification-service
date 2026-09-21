@@ -1,0 +1,229 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'nu.studer.jooq' version '9.0'
+    id 'jacoco'
+}
+
+group = 'com.computer-rescuer'
+version = appVersion
+
+// ===================================================
+// ビルド構成
+// ===================================================
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+sourceSets {
+    e2eTest {
+        java.srcDir 'src/e2eTest/java'
+        resources.srcDir 'src/e2eTest/resources'
+
+        // メインのコードと、通常のテスト(test)のクラスを読み込めるようにする
+        compileClasspath += sourceSets.main.output + sourceSets.test.output
+        runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    e2eTestImplementation.extendsFrom testImplementation
+    e2eTestRuntimeOnly.extendsFrom testRuntimeOnly
+    e2eTestCompileOnly.extendsFrom testCompileOnly
+    e2eTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+}
+
+// ===================================================
+// リポジトリ
+// ===================================================
+repositories {
+    mavenCentral()
+}
+
+// ===================================================
+// 依存関係
+// ===================================================
+ext {
+    openapiUiVer = '3.0.2'
+    mapstructVer = '1.5.5.Final'
+    lombokMapstructBindingVer = '0.2.0'
+    jooqVer = dependencyManagement.importedProperties['jooq.version']
+    testcontainersVersion = "1.19.7"
+    jjwtVer = "0.12.6"
+    shedlockVer = "5.13.0"
+}
+dependencies {
+    // Spring Boot
+    // (Web)
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openapiUiVer}"
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+//    // (DB)
+//    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+//    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+//    // ① 更新系（Command担当）: Spring Data JDBC
+//    implementation 'org.springframework.boot:spring-boot-starter-jooq'    // ② 参照系（Query担当）: jOOQ
+
+    // Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // Tools
+//    // DB
+//    runtimeOnly 'org.postgresql:postgresql'
+//    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
+//    // MapStruct（マッピング自動生成）
+//    implementation "org.mapstruct:mapstruct:${mapstructVer}"
+//    // jOOQのSQL解析エンジン(Table定義Javaクラスの自動生成)
+//    jooqGenerator "org.jooq:jooq-meta-extensions:${jooqVer}"
+    // Java JWT
+    implementation "io.jsonwebtoken:jjwt-api:${jjwtVer}"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVer}"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVer}"
+
+    // Lombok & MapStruct Annotation Processors
+    // ※注意：コンパイル時の処理順序はLombok → MapStruct の順
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+//    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVer}"
+    annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${lombokMapstructBindingVer}"
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+//    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+//    testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
+//    testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"
+
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+}
+
+// ===================================================
+// ローカル用bootRun
+// ===================================================
+tasks.register("bootRunLocal", BootRun) {
+    group = "application"
+    description = "ローカル開発用（localプロファイル）でSpring Bootを起動します"
+
+    mainClass = tasks.bootRun.mainClass
+    classpath = sourceSets.main.runtimeClasspath
+
+    // 起動時に強制的に local プロファイルを指定する
+    systemProperty "spring.profiles.active", "local"
+}
+
+// ===================================================
+// Unit Test関連
+// ===================================================
+tasks.named('test') {
+    useJUnitPlatform {
+        // E2Eテストは通常の単体テストとは分離するため「除外」する
+        excludeTags 'e2e'
+    }
+
+    // CPUコア数に応じた並列実行（JUnit）。全コアの「半分」を割り当てる
+    maxParallelForks = Math.max(1, (int) (Runtime.runtime.availableProcessors() / 2))
+
+    // テストが成功したら、自動的にJaCoCoレポートを出力するタスクを呼ぶ
+    finalizedBy 'jacocoTestReport'
+}
+
+// ===================================================
+// JaCoCo（カバレッジレポート）の設定
+// ===================================================
+jacocoTestReport {
+    dependsOn test // レポート作成前に必ずtestを走らせる
+    reports {
+        xml.required = true
+        html.required = true // これをtrueにすると美しいHTMLレポートが出ます
+    }
+    // 自動生成されたjOOQクラスなど、テスト不要なものをカバレッジ計算から除外
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/generated/jooq/**',
+                    '**/*Application.class'
+            ])
+        }))
+    }
+}
+
+// ===================================================
+// E2E Test関連
+// ===================================================
+tasks.named('processE2eTestResources') {
+    // 重複したファイルがある場合、E2E側のファイルを優先して上書きする設定
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.register('e2eTest', Test) {
+    description = 'Runs end-to-end tests.'
+    group = 'verification'
+
+    // 先ほど定義した e2eTest ディレクトリのコードを実行対象にする
+    testClassesDirs = sourceSets.e2eTest.output.classesDirs
+    classpath = sourceSets.e2eTest.runtimeClasspath
+
+    useJUnitPlatform()
+
+    // E2Eテストは直列（1）で安全に動かす
+    maxParallelForks = 1
+
+    // 通常の単体テスト（test）が成功した後にのみ実行する
+    shouldRunAfter test
+
+    // profileはtest→e2eを読み込む
+    systemProperty 'spring.profiles.active', 'test,e2e'
+}
+
+// ビルド（厳密にはcheckフェーズ）の際に、e2eTestも自動で組み込む
+tasks.named('check') {
+    dependsOn e2eTest
+}
+
+// ===================================================
+// jOOQ Entityクラス生成
+// ===================================================
+//jooq {
+//    version = "${jooqVer}"
+//
+//    configurations {
+//        main {
+//            generateSchemaSourceOnCompilation = true
+//
+//            generationTool {
+//                generator {
+//                    name = 'org.jooq.codegen.JavaGenerator'
+//                    database {
+//                        // SQLファイルを直接参照
+//                        name = 'org.jooq.meta.extensions.ddl.DDLDatabase'
+//                        properties {
+//                            property {
+//                                key = 'scripts'
+//                                value = 'src/main/resources/db/migration'
+//                            }
+//                            property {
+//                                key = 'sort'
+//                                value = 'semantic'
+//                            }
+//                        }
+//                    }
+//                    target {
+//                        packageName = 'com.computer_rescuer.attendance_management.generated.jooq'
+//                        directory = 'build/generated-src/jooq/main'
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
