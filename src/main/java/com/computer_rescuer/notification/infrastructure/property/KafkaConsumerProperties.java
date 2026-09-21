@@ -21,12 +21,14 @@ public record KafkaConsumerProperties(
     /**
      * 各種業務イベントを購読するための Kafka トピック名定義レコード。
      *
-     * @param notification   汎用通知コマンドを受信するトピック名
-     * @param unstampedAlert 勤怠管理サービスから未打刻検知イベントを受信するトピック名
+     * @param notification    汎用通知コマンドを受信するトピック名
+     * @param unstampedAlert  勤怠管理サービスから未打刻検知イベントを受信するトピック名
+     * @param unstampedDirect 勤怠管理サービスから未打刻警告イベントを受信するトピック名
      */
     public record Topics(
             String notification,
-            String unstampedAlert
+            String unstampedAlert,
+            String unstampedDirect
     ) {
     }
 
