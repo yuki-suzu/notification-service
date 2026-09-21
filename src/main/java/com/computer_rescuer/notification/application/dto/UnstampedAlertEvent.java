@@ -2,10 +2,7 @@ package com.computer_rescuer.notification.application.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,11 +38,12 @@ public record UnstampedAlertEvent(
     /**
      * 未打刻対象となった個別従業員の業務情報を保持する不変レコード。
      *
-     * @param employeeNumber   自社システムにおける従業員番号（必須）
-     * @param email            社用メールアドレス（必須・正しいメール形式）
-     * @param departmentName   所属部門名（必須）
-     * @param fullName         従業員の氏名（必須）
-     * @param scheduledStartAt 当該従業員の出勤予定時刻（必須）
+     * @param employeeNumber        自社システムにおける従業員番号（必須）
+     * @param email                 社用メールアドレス（必須・正しいメール形式）
+     * @param departmentName        所属部門名（必須）
+     * @param fullName              従業員の氏名（必須）
+     * @param scheduledStartAt      当該従業員の出勤予定時刻（必須）
+     * @param monthlyUnstampedCount 当月における未打刻検知の累積回数（必須・1以上）
      */
     public record UnstampedEmployee(
             @NotBlank(message = "社員番号は必須です")
@@ -67,7 +65,12 @@ public record UnstampedAlertEvent(
 
             @NotNull(message = "出勤予定時刻は必須です")
             @JsonProperty("scheduled_start_at")
-            LocalTime scheduledStartAt
+            LocalTime scheduledStartAt,
+
+            @NotNull(message = "当月未打刻回数は必須です")
+            @Min(value = 1, message = "当月未打刻回数は1以上である必要があります")
+            @JsonProperty("monthly_unstamped_count")
+            Integer monthlyUnstampedCount
     ) {
     }
 }

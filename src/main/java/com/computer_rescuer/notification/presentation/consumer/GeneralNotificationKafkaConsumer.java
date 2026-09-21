@@ -58,7 +58,7 @@ public class GeneralNotificationKafkaConsumer {
     public void handleDlt(
             @Payload NotificationCommand event,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-            Throwable throwable // 💡 発生例外をSpringから注入！
+            Throwable throwable
     ) {
         dltErrorHandler.handleError(topic, event, throwable);
     }

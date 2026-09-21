@@ -95,7 +95,6 @@ public class LineworksCoreHttpClient {
         log.debug("▶︎ [LINE WORKS {} Request]: URI={}, Body={}", apiName, path, request);
 
         try {
-            // 💡 RestClient を用いた直感的で安全な HTTP リクエスト構築
             ResponseEntity<String> response = restClient.post()
                     .uri(path) // BaseURL はコンストラクタで設定済みのため、パスのみでOK
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
