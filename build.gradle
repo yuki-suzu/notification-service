@@ -4,17 +4,12 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'nu.studer.jooq' version '9.0'
     id 'jacoco'
 }
 
 group = 'com.computer-rescuer'
 version = appVersion
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
-}
 
 // ===================================================
 // ビルド構成
@@ -57,30 +52,59 @@ repositories {
 // 依存関係
 // ===================================================
 ext {
+    openapiUiVer = '3.0.2'
+    mapstructVer = '1.5.5.Final'
+    lombokMapstructBindingVer = '0.2.0'
+    jooqVer = dependencyManagement.importedProperties['jooq.version']
+    testcontainersVersion = "1.19.7"
     jjwtVer = "0.12.6"
+    shedlockVer = "5.13.0"
 }
 dependencies {
     // Spring Boot
+    // (Web)
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openapiUiVer}"
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+//    // (DB)
+//    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+//    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+//    // ① 更新系（Command担当）: Spring Data JDBC
+//    implementation 'org.springframework.boot:spring-boot-starter-jooq'    // ② 参照系（Query担当）: jOOQ
 
     // Kafka
     implementation 'org.springframework.kafka:spring-kafka'
 
-    // JWT (LINE WORKS認証用)
+    // Tools
+//    // DB
+//    runtimeOnly 'org.postgresql:postgresql'
+//    runtimeOnly 'org.flywaydb:flyway-database-postgresql'
+//    // MapStruct（マッピング自動生成）
+//    implementation "org.mapstruct:mapstruct:${mapstructVer}"
+//    // jOOQのSQL解析エンジン(Table定義Javaクラスの自動生成)
+//    jooqGenerator "org.jooq:jooq-meta-extensions:${jooqVer}"
+    // Java JWT
     implementation "io.jsonwebtoken:jjwt-api:${jjwtVer}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVer}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVer}"
 
-    // Lombok
+    // Lombok & MapStruct Annotation Processors
+    // ※注意：コンパイル時の処理順序はLombok → MapStruct の順
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+//    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVer}"
+    annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${lombokMapstructBindingVer}"
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+//    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+//    testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
+//    testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"
+
     testImplementation 'org.springframework.kafka:spring-kafka-test'
 }
 
@@ -166,3 +190,40 @@ tasks.register('e2eTest', Test) {
 tasks.named('check') {
     dependsOn e2eTest
 }
+
+// ===================================================
+// jOOQ Entityクラス生成
+// ===================================================
+//jooq {
+//    version = "${jooqVer}"
+//
+//    configurations {
+//        main {
+//            generateSchemaSourceOnCompilation = true
+//
+//            generationTool {
+//                generator {
+//                    name = 'org.jooq.codegen.JavaGenerator'
+//                    database {
+//                        // SQLファイルを直接参照
+//                        name = 'org.jooq.meta.extensions.ddl.DDLDatabase'
+//                        properties {
+//                            property {
+//                                key = 'scripts'
+//                                value = 'src/main/resources/db/migration'
+//                            }
+//                            property {
+//                                key = 'sort'
+//                                value = 'semantic'
+//                            }
+//                        }
+//                    }
+//                    target {
+//                        packageName = 'com.computer_rescuer.attendance_management.generated.jooq'
+//                        directory = 'build/generated-src/jooq/main'
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
