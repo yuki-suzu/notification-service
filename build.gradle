@@ -59,6 +59,7 @@ ext {
     testcontainersVersion = "1.19.7"
     jjwtVer = "0.12.6"
     shedlockVer = "5.13.0"
+//    springwolfVer = '1.7.0'
 }
 dependencies {
     // Spring Boot
@@ -75,6 +76,9 @@ dependencies {
 
     // Kafka
     implementation 'org.springframework.kafka:spring-kafka'
+//    // Kafka 版 Swagger (AsyncAPI ドキュメント & UI)
+//    implementation "io.github.springwolf:springwolf-kafka:${springwolfVer}"
+//    implementation "io.github.springwolf:springwolf-ui:${springwolfVer}"
 
     // Tools
 //    // DB

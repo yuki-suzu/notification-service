@@ -73,6 +73,7 @@ app:
       notification: ${APP_KAFKA_TOPIC_NOTIFICATION:notification-topic}
       unstamped-alert: ${APP_KAFKA_TOPIC_UNSTAMPED_ALERT:unstamped-alert-topic}
       unstamped-direct: ${APP_KAFKA_TOPIC_UNSTAMPED_DIRECT:unstamped-direct-topic}
+      attendance-irregularity: ${APP_KAFKA_TOPIC_ATTENDANCE_IRREGULARITY:attendance-irregularity-topic}
     retry:
       max-attempts: ${APP_KAFKA_RETRY_MAX_ATTEMPTS:3}
       initial-delay-ms: ${APP_KAFKA_RETRY_INITIAL_DELAY_MS:1000}
@@ -86,6 +87,24 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+## ===================================================
+## Kafka API仕様書 (Springwolf / AsyncAPI)
+## ===================================================
+#springwolf:
+#  docket:
+#    base-package: com.computer_rescuer.notification
+#    info:
+#      title: Notification Service Kafka API
+#      version: 1.0.0
+#      description: 勤怠通知マイクロサービス 非同期メッセージング仕様書
+#    servers:
+#      kafka:
+#        protocol: kafka
+#        host: ${KAFKA_BOOTSTRAP_SERVERS:shared-kafka:9092}
+#  scanner:
+#    consumer:
+#      kafka:
+#        enabled: true
 
 logging:
   level:

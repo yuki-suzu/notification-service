@@ -57,7 +57,8 @@ public class KafkaConsumerConfig {
                 .includeTopics(List.of(
                         properties.topics().notification(),
                         properties.topics().unstampedAlert(),
-                        properties.topics().unstampedDirect()
+                        properties.topics().unstampedDirect(),
+                        properties.topics().attendanceIrregularity()
                 ))
                 .dltProcessingFailureStrategy(DltStrategy.FAIL_ON_ERROR)
                 .create(kafkaTemplate);
