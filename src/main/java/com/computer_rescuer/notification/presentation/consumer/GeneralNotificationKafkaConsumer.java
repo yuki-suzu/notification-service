@@ -50,15 +50,16 @@ public class GeneralNotificationKafkaConsumer {
     /**
      * 汎用通知のリトライ上限到達時における DLT 退避ハンドラー。
      *
-     * @param event 失敗メッセージ
-     * @param topic DLTトピック名
+     * @param event     失敗メッセージ
+     * @param topic     DLTトピック名
+     * @param throwable 発生した障害例外オブジェクト
      */
     @DltHandler
     public void handleDlt(
             @Payload NotificationCommand event,
-            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            Throwable throwable // 💡 発生例外をSpringから注入！
     ) {
-// ハンドラーに丸投げして安全に対処！
-        dltErrorHandler.handleError(topic, event, null);
+        dltErrorHandler.handleError(topic, event, throwable);
     }
 }

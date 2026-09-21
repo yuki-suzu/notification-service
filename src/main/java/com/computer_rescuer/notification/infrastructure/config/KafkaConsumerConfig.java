@@ -9,6 +9,7 @@ import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.retrytopic.DltStrategy;
 import org.springframework.kafka.retrytopic.RetryTopicConfiguration;
 import org.springframework.kafka.retrytopic.RetryTopicConfigurationBuilder;
+import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
 
 import java.util.List;
 
@@ -32,8 +33,7 @@ public class KafkaConsumerConfig {
      * <p>
      * メッセージ受信時に例外が発生した場合、本 Bean で定義されたバックオフ間隔で
      * 再試行トピックへ転送されます。最大試行回数を超過した場合は自動的に DLT へ退避されます。<br>
-     * {@link Lazy} によりプロキシ経由で {@link KafkaOperations} を解決するため、
-     * 自動構成 Bean の生成順序に依存せず安全に初期化が完了します。
+     * DLT ハンドラーメソッドは各リスナークラス（Consumer）に定義された {@code @DltHandler} が自動解決されます。
      * </p>
      *
      * @param kafkaTemplate リトライメッセージおよび DLT 転送に使用する {@link KafkaOperations}（遅延注入プロキシ）
@@ -41,7 +41,7 @@ public class KafkaConsumerConfig {
      */
     @Bean
     public RetryTopicConfiguration notificationRetryTopicConfiguration(
-            @Lazy KafkaOperations<?, ?> kafkaTemplate // 💡 @Lazy を添えて順序問題を一撃で解決！
+            @Lazy KafkaOperations<?, ?> kafkaTemplate
     ) {
         return RetryTopicConfigurationBuilder
                 .newInstance()
@@ -51,14 +51,13 @@ public class KafkaConsumerConfig {
                         properties.retry().multiplier(),
                         properties.retry().maxDelayMs()
                 )
-                // バリデーションエラーはリトライせず即座にDLTへ転送！
-                .notRetryOn(org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException.class)
+                // バリデーションエラーはリトライせず即座にDLTへ転送
+                .notRetryOn(MethodArgumentNotValidException.class)
                 .autoCreateTopics(true, 1, (short) 1)
                 .includeTopics(List.of(
                         properties.topics().notification(),
                         properties.topics().unstampedAlert()
                 ))
-                .dltHandlerMethod("notificationKafkaConsumer", "handleDlt")
                 .dltProcessingFailureStrategy(DltStrategy.FAIL_ON_ERROR)
                 .create(kafkaTemplate);
     }
