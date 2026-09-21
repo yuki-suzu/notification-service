@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 /**
  * 未打刻者検知イベントから通知用の整形テキストを組み立てるドメインサービス。
  * <p>
- * 未打刻者の一覧を所属部門ごとにグルーピングし、管理者向けトークルームで視認しやすい
- * フォーマット済みのアラートメッセージ文字列を構築します。
+ * 未打刻者の一覧を所属部門ごとにグルーピングし、出勤予定時刻および当月の累積未打刻回数を盛り込んだ
+ * 管理者向けトークルームで視認しやすいフォーマット済みのアラートメッセージ文字列を構築します。
  * </p>
  */
 @Service
@@ -22,7 +22,7 @@ public class UnstampedAlertMessageFormatter {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     /**
-     * 未打刻者リストを部門別にグループ化し、管理者チャンネル向けのアラート本文を構築します。
+     * 未打刻者リストを部門別にグループ化し、出勤予定時刻および当月累積回数を含む管理者チャンネル向けのアラート本文を構築します。
      *
      * @param targetDate 勤怠判定の対象日
      * @param employees  未打刻従業員のリスト
@@ -47,7 +47,9 @@ public class UnstampedAlertMessageFormatter {
                 String timeStr = emp.scheduledStartAt() != null
                         ? emp.scheduledStartAt().format(TIME_FORMATTER)
                         : "予定不明";
-                sb.append(String.format("  ・%s （予定: %s〜）%n", emp.fullName(), timeStr));
+                int count = emp.monthlyUnstampedCount() != null ? emp.monthlyUnstampedCount() : 1;
+
+                sb.append(String.format("  ・%s （予定: %s〜 / 今月%d回目）%n", emp.fullName(), timeStr, count));
             }
             sb.append("\n");
         });

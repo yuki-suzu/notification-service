@@ -65,7 +65,7 @@ public class UnstampedAlertKafkaConsumer {
     public void handleDlt(
             @Payload UnstampedAlertEvent event,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-            Throwable throwable // 💡 発生例外をSpringから注入！
+            Throwable throwable
     ) {
         dltErrorHandler.handleError(topic, event, throwable);
     }
