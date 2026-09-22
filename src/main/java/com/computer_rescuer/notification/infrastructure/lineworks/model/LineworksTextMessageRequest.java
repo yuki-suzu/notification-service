@@ -11,26 +11,26 @@ package com.computer_rescuer.notification.infrastructure.lineworks.model;
  */
 public record LineworksTextMessageRequest(Content content) {
 
-    /**
-     * 最も基本的なテキストメッセージのリクエストオブジェクトを生成するファクトリメソッド。
-     * <p>
-     * 呼び出し元が LINE WORKS 固有のデータ構造（Content 等）を意識することなく、 送りたい文字列を渡すだけで適切なリクエストボディが組み上がるように設計されています。
-     * </p>
-     *
-     * @param text 送信したいプレーンテキストのメッセージ
-     * @return 構築済みのテキストメッセージリクエストオブジェクト
-     */
-    public static LineworksTextMessageRequest ofText(String text) {
-        return new LineworksTextMessageRequest(new Content("text", text));
-    }
+  /**
+   * 最も基本的なテキストメッセージのリクエストオブジェクトを生成するファクトリメソッド。
+   * <p>
+   * 呼び出し元が LINE WORKS 固有のデータ構造（Content 等）を意識することなく、 送りたい文字列を渡すだけで適切なリクエストボディが組み上がるように設計されています。
+   * </p>
+   *
+   * @param text 送信したいプレーンテキストのメッセージ
+   * @return 構築済みのテキストメッセージリクエストオブジェクト
+   */
+  public static LineworksTextMessageRequest ofText(String text) {
+    return new LineworksTextMessageRequest(new Content("text", text));
+  }
 
-    /**
-     * LINE WORKS メッセージのコンテンツ部分を表現する内部 Record。
-     *
-     * @param type メッセージの種別。テキストの場合は常に "text" となります。
-     * @param text 実際にユーザーの画面に表示される文字列
-     */
-    public record Content(String type, String text) {
+  /**
+   * LINE WORKS メッセージのコンテンツ部分を表現する内部 Record。
+   *
+   * @param type メッセージの種別。テキストの場合は常に "text" となります。
+   * @param text 実際にユーザーの画面に表示される文字列
+   */
+  public record Content(String type, String text) {
 
-    }
+  }
 }

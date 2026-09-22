@@ -41,14 +41,22 @@ spring:
     consumer:
       group-id: ${KAFKA_CONSUMER_GROUP_ID:notification-service-group}
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer # これがないと不正データで無限ループ
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer # これがないと不正データで無限ループ
       properties:
-        spring.json.trusted.packages: "com.computer_rescuer.*"
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer # エラーハンドリングされている実際に動くデシリアライザー
+        spring.deserializer.value.delegate.class: org.apache.kafka.common.serialization.ByteArrayDeserializer # エラーハンドリングされている実際に動くデシリアライザー
+        #        spring.json.trusted.packages: "com.computer_rescuer.*"
+        # FIXME: 全許容では意味がないので是非は必ず確認する
+        spring.json.trusted.packages: "*"
+        # FIXME: 「spring.json.use.type.headers: false」との矛盾は後で必ず確認する
+        spring.json.value.default.type: "java.lang.Object"
+    #        # マイクロサービス間での連携や外部システムとの通信において、Java固有の型ヘッダーに依存したくない場合、またはデシリアライズエラーを安全に扱う場合はfalseとする
+    #        spring.json.use.type.headers: false
     producer:
-      # @RetryableTopic がリトライやDLTへメッセージを再転送する際に使用
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      # 💡 Spring Kafka 4.0 正式推奨の Jackson シリアライザ！
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
 # ===================================================
 # アプリケーション独自設定
 # ===================================================

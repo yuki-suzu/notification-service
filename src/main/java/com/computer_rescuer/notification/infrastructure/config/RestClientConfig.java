@@ -13,13 +13,13 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class RestClientConfig {
 
-    /**
-     * 共通の RestClient ビルダーを生成します。
-     *
-     * @return RestClient.Builder インスタンス
-     */
-    @Bean
-    public RestClient.Builder restClientBuilder() {
-        return RestClient.builder();
-    }
+  /**
+   * 共通の RestClient ビルダーを生成します。
+   *
+   * @return RestClient.Builder インスタンス
+   */
+  @Bean
+  public RestClient.Builder restClientBuilder() {
+    return RestClient.builder();
+  }
 }
