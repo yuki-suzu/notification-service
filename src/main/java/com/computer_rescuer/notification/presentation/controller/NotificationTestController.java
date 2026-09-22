@@ -24,54 +24,54 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class NotificationTestController {
 
-    /**
-     * 通知配信ユースケースの入力インターフェース
-     */
-    private final SendNotificationUseCase sendNotificationUseCase;
+  /**
+   * 通知配信ユースケースの入力インターフェース
+   */
+  private final SendNotificationUseCase sendNotificationUseCase;
 
-    /**
-     * 管理者チャンネルへのテストアラート通知を送信します。
-     *
-     * @param message 送信するメッセージ本文（未指定時は既定のテスト定型文）
-     * @return 実行結果を示すレスポンスエンティティ
-     */
-    @PostMapping("/alert")
-    public ResponseEntity<String> testAlert(
-            @RequestParam(required = false, defaultValue = "🤖 [NotificationService] テスト通知ですじゃ！") String message
-    ) {
-        log.info("テストアラート通知要求を受信: {}", message);
+  /**
+   * 管理者チャンネルへのテストアラート通知を送信します。
+   *
+   * @param message 送信するメッセージ本文（未指定時は既定のテスト定型文）
+   * @return 実行結果を示すレスポンスエンティティ
+   */
+  @PostMapping("/alert")
+  public ResponseEntity<String> testAlert(
+      @RequestParam(required = false, defaultValue = "🤖 [NotificationService] テスト通知ですじゃ！") String message
+  ) {
+    log.info("テストアラート通知要求を受信: {}", message);
 
-        NotificationCommand command = new NotificationCommand(
-                NotificationChannelType.LINE_WORKS,
-                Notification.DestinationType.CHANNEL,
-                null,
-                message
-        );
-        sendNotificationUseCase.send(command);
+    NotificationCommand command = new NotificationCommand(
+        NotificationChannelType.LINE_WORKS,
+        Notification.DestinationType.CHANNEL,
+        null,
+        message
+    );
+    sendNotificationUseCase.send(command);
 
-        return ResponseEntity.ok("アラートチャンネルへ送信完了じゃ！");
-    }
+    return ResponseEntity.ok("アラートチャンネルへ送信完了じゃ！");
+  }
 
-    /**
-     * システム管理者個人へのテストエラー通知を送信します。
-     *
-     * @param message 送信するメッセージ本文（未指定時は既定のテスト定型文）
-     * @return 実行結果を示すレスポンスエンティティ
-     */
-    @PostMapping("/error")
-    public ResponseEntity<String> testError(
-            @RequestParam(required = false, defaultValue = "🚨 [NotificationService] テスト障害通知ですじゃ！") String message
-    ) {
-        log.info("テストエラー通知要求を受信: {}", message);
+  /**
+   * システム管理者個人へのテストエラー通知を送信します。
+   *
+   * @param message 送信するメッセージ本文（未指定時は既定のテスト定型文）
+   * @return 実行結果を示すレスポンスエンティティ
+   */
+  @PostMapping("/error")
+  public ResponseEntity<String> testError(
+      @RequestParam(required = false, defaultValue = "🚨 [NotificationService] テスト障害通知ですじゃ！") String message
+  ) {
+    log.info("テストエラー通知要求を受信: {}", message);
 
-        NotificationCommand command = new NotificationCommand(
-                NotificationChannelType.LINE_WORKS,
-                Notification.DestinationType.USER,
-                null,
-                message
-        );
-        sendNotificationUseCase.send(command);
+    NotificationCommand command = new NotificationCommand(
+        NotificationChannelType.LINE_WORKS,
+        Notification.DestinationType.USER,
+        null,
+        message
+    );
+    sendNotificationUseCase.send(command);
 
-        return ResponseEntity.ok("システム管理者へ送信完了じゃ！");
-    }
+    return ResponseEntity.ok("システム管理者へ送信完了じゃ！");
+  }
 }

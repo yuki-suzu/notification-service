@@ -11,12 +11,12 @@ import com.computer_rescuer.notification.application.dto.UnstampedAlertEvent;
  */
 public interface NotifyUnstampedAlertUseCase {
 
-    /**
-     * 未打刻者検知イベントを処理し、整形されたアラートメッセージを配信します。
-     *
-     * @param event 勤怠管理サービスから発行された未打刻検知イベントデータ
-     * @throws IllegalArgumentException イベントパラメータが不正な場合
-     * @throws RuntimeException         外部通知サービスとの通信に失敗した場合
-     */
-    void execute(UnstampedAlertEvent event);
+  /**
+   * 未打刻者検知イベントを処理し、整形されたアラートメッセージを配信します。
+   *
+   * @param event 勤怠管理サービスから発行された未打刻検知イベントデータ
+   * @throws IllegalArgumentException イベントパラメータが不正な場合
+   * @throws RuntimeException         外部通知サービスとの通信に失敗した場合
+   */
+  void execute(UnstampedAlertEvent event);
 }

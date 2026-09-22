@@ -7,14 +7,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "app.line-works")
 public record LineworksProperties(
-        String baseUrl,
-        String clientId,
-        String clientSecret,
-        String serviceAccount,
-        String privateKey,
-        String botId,
-        String alertChannelId,
-        String systemManagerId
+    String baseUrl,
+    String clientId,
+    String clientSecret,
+    String serviceAccount,
+    String privateKey,
+    String botId,
+    String alertChannelId,
+    String systemManagerId
 ) {
 
 }

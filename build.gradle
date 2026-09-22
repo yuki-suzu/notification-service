@@ -2,7 +2,7 @@ import org.springframework.boot.gradle.tasks.run.BootRun
 
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.5'
+    id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'nu.studer.jooq' version '9.0'
     id 'jacoco'
@@ -65,17 +65,18 @@ dependencies {
     // Spring Boot
     // (Web)
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openapiUiVer}"
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // Kafka: Spring Boot 4 公式スターター（従来は'org.springframework.kafka:spring-kafka'だった）
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
 //    // (DB)
 //    implementation 'org.springframework.boot:spring-boot-starter-flyway'
 //    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 //    // ① 更新系（Command担当）: Spring Data JDBC
 //    implementation 'org.springframework.boot:spring-boot-starter-jooq'    // ② 参照系（Query担当）: jOOQ
 
-    // Kafka
-    implementation 'org.springframework.kafka:spring-kafka'
 //    // Kafka 版 Swagger (AsyncAPI ドキュメント & UI)
 //    implementation "io.github.springwolf:springwolf-kafka:${springwolfVer}"
 //    implementation "io.github.springwolf:springwolf-ui:${springwolfVer}"

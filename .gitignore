@@ -25,6 +25,11 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+# ただし、コードスタイル設定だけは Git 管理に含める！
+!.idea/codeStyles/**
+!.idea/google-java-format.xml
+# もし Qodana などの共通インスペクションも共有したければ以下も追加
+!.idea/inspectionProfiles/
 
 ### NetBeans ###
 /nbproject/private/

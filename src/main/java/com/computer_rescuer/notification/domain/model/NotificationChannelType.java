@@ -7,16 +7,16 @@ package com.computer_rescuer.notification.domain.model;
  * </p>
  */
 public enum NotificationChannelType {
-    /**
-     * LINE WORKS チャット/トークルーム通知
-     */
-    LINE_WORKS,
-    /**
-     * Slack チャンネル通知（将来拡張用）
-     */
-    SLACK,
-    /**
-     * Eメール通知（将来拡張用）
-     */
-    EMAIL
+  /**
+   * LINE WORKS チャット/トークルーム通知
+   */
+  LINE_WORKS,
+  /**
+   * Slack チャンネル通知（将来拡張用）
+   */
+  SLACK,
+  /**
+   * Eメール通知（将来拡張用）
+   */
+  EMAIL
 }
