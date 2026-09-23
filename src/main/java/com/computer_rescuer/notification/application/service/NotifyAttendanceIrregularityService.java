@@ -1,11 +1,12 @@
 package com.computer_rescuer.notification.application.service;
 
 import com.computer_rescuer.notification.application.NotifyAttendanceIrregularityUseCase;
-import com.computer_rescuer.notification.application.dto.AttendanceIrregularityAlertEvent;
+import com.computer_rescuer.notification.application.dto.AttendanceIrregularityEvent;
 import com.computer_rescuer.notification.domain.gateway.NotificationSender;
 import com.computer_rescuer.notification.domain.model.Notification;
 import com.computer_rescuer.notification.domain.model.NotificationChannelType;
 import com.computer_rescuer.notification.domain.service.AttendanceIrregularityMessageFormatter;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -14,12 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 勤怠不良者検知イベントに対するアラート通知ユースケースを処理するアプリケーションサービス。
- * <p>
- * {@link NotifyAttendanceIrregularityUseCase} を実装し、日次集計された勤怠不良者一覧を
- * ドメインフォーマッター（{@link AttendanceIrregularityMessageFormatter}）で整形後、 LINE WORKS
- * の管理者トークルーム宛てに一括送信します。
- * </p>
+ * 月次勤怠サマリエベントを処理し、LINE WORKS へメッセージ配信するアプリケーションサービス。
  */
 @Slf4j
 @Service
@@ -28,12 +24,6 @@ public class NotifyAttendanceIrregularityService implements NotifyAttendanceIrre
   private final Map<NotificationChannelType, NotificationSender> senderMap;
   private final AttendanceIrregularityMessageFormatter messageFormatter;
 
-  /**
-   * コンストラクタ。
-   *
-   * @param senders          DIコンテナに登録されている全送信ゲートウェイのリスト
-   * @param messageFormatter 勤怠不良アラート文面整形ドメインサービス
-   */
   public NotifyAttendanceIrregularityService(
       List<NotificationSender> senders,
       AttendanceIrregularityMessageFormatter messageFormatter
@@ -43,14 +33,11 @@ public class NotifyAttendanceIrregularityService implements NotifyAttendanceIrre
     this.messageFormatter = messageFormatter;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
-  public void execute(AttendanceIrregularityAlertEvent event) {
+  public void execute(AttendanceIrregularityEvent event) {
     if (event.employees() == null || event.employees().isEmpty()) {
-      log.info("ℹ️ 対象日: {} の勤怠不良検知対象者はいませんでした。通知をスキップします。",
-          event.targetDate());
+      log.info("ℹ️ 対象月: {} の勤怠サマリ対象者はいませんでした。通知をスキップします。",
+          event.procMonth());
       return;
     }
 
@@ -60,17 +47,19 @@ public class NotifyAttendanceIrregularityService implements NotifyAttendanceIrre
       throw new IllegalStateException("LINE WORKS 送信ゲートウェイが未登録です");
     }
 
-    log.info("▶ [勤怠不良アラート処理] 対象日: {}, 対象者数: {} 名のアラート通知を生成します。",
-        event.targetDate(), event.employees().size());
+    LocalDateTime now = LocalDateTime.now();
+    log.info(
+        "▶ [月次勤怠サマリ通知] 受信日時: {}, 対象月: {}, 送信対象者: {} 名のメッセージを生成します。",
+        now, event.procMonth(), event.employees().size());
 
-    // 1. ドメインフォーマッターで文面を整形
-    String formattedMessage = messageFormatter.format(event.targetDate(), event.employees());
+    // 1. 受信時点の日時を渡して文面を整形
+    String formattedMessage = messageFormatter.format(now, event.employees());
 
-    // 2. 管理者チャンネル（トークルーム）宛ての通知モデルを生成
+    // 2. 管理者チャンネル宛て通知モデルを生成
     Notification notification = Notification.ofLineWorksAlert(formattedMessage);
 
-    // 3. 送信ゲートウェイへ配送
+    // 3. 送信
     sender.send(notification);
-    log.info("✅ [勤怠不良アラート完了] 管理者トークルームへの警告レポート送信が完了しました。");
+    log.info("✅ [月次勤怠サマリ通知完了] 管理者トークルームへのサマリ送信が完了しました。");
   }
 }

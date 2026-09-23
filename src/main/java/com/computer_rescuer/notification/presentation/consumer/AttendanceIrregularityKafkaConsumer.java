@@ -1,8 +1,7 @@
 package com.computer_rescuer.notification.presentation.consumer;
 
 import com.computer_rescuer.notification.application.NotifyAttendanceIrregularityUseCase;
-import com.computer_rescuer.notification.application.dto.AttendanceIrregularityAlertEvent;
-import com.computer_rescuer.notification.presentation.consumer.handler.DltErrorHandler;
+import com.computer_rescuer.notification.application.dto.AttendanceIrregularityEvent;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,32 +12,19 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 /**
- * 勤怠不良者検知トピックを購読するインバウンドメッセージリスナー。
- * <p>
- * 勤怠管理サービスから日次バッチで配信された検知イベント（{@link AttendanceIrregularityAlertEvent}）を受信・検証し、
- * 管理者トークルーム向けのアラート通知ユースケース（{@link NotifyAttendanceIrregularityUseCase}）へディスパッチします。<br> 再試行上限超過時は
- * DLT ハンドラーへ遷移し、システム管理者へ障害を通報します。
- * </p>
+ * 勤怠異常・月次サマリートピックを購読するインバウンドメッセージリスナー。
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AttendanceIrregularityKafkaConsumer {
 
-  /**
-   * 勤怠不良アラート通知ユースケース
-   */
   private final NotifyAttendanceIrregularityUseCase notifyAttendanceIrregularityUseCase;
 
   /**
-   * DLT 退避時および致命的障害ハンドラー
-   */
-  private final DltErrorHandler dltErrorHandler;
-
-  /**
-   * 勤怠不良者検知トピックからメッセージを非同期に購読（Consume）します。
+   * 勤怠異常トピックからメッセージを非同期に購読（Consume）します。
    *
-   * @param event     受信した勤怠不良検知イベント（バリデーション適用済み）
+   * @param event     受信した月次勤怠サマリエベント（バリデーション適用済み）
    * @param topic     受信元トピック名
    * @param partition 受信元パーティション番号
    * @param offset    メッセージオフセット
@@ -48,15 +34,15 @@ public class AttendanceIrregularityKafkaConsumer {
       groupId = "${spring.kafka.consumer.group-id:notification-service-group}"
   )
   public void consume(
-      @Payload @Valid AttendanceIrregularityAlertEvent event,
+      @Payload @Valid AttendanceIrregularityEvent event,
       @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
       @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
       @Header(KafkaHeaders.OFFSET) long offset
   ) {
-    int employeeCount = (event.employees() != null) ? event.employees().size() : 0;
+    int count = (event.employees() != null) ? event.employees().size() : 0;
     log.info(
-        "📥 [Kafka受信: 勤怠不良検知] Topic: {}, Partition: {}, Offset: {}, 対象日: {}, 件数: {}",
-        topic, partition, offset, event.targetDate(), employeeCount);
+        "📥 [Kafka受信: 月次勤怠サマリ] Topic: {}, Partition: {}, Offset: {}, 対象月: {}, 対象者数: {} 名",
+        topic, partition, offset, event.procMonth(), count);
 
     notifyAttendanceIrregularityUseCase.execute(event);
   }
