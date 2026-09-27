@@ -18,13 +18,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * 未打刻者本人への個別ダイレクト通知ユースケースを処理するアプリケーションサービス。
  * <p>
  * {@link SendUnstampedDirectReminderUseCase} を実装し、未打刻対象従業員の一覧を走査して個別DMを送信します。<br>
- * 本人への送信成否（成功者・失敗者）を収集し、レポートフォーマッター（{@link DirectReminderReportFormatter}）
- * を通じて管理者トークルームへ全件結果を一括報告します。
+ * メール未設定やアカウント逆引き失敗時は管理者宛てに代理送信を行い、 最終結果をレポートフォーマッターを通じて管理者トークルームへ報告します。
  * </p>
  */
 @Slf4j
@@ -73,7 +73,7 @@ public class SendUnstampedDirectReminderService implements SendUnstampedDirectRe
       throw new IllegalStateException("LINE WORKS 送信ゲートウェイが未登録です");
     }
 
-    log.info("▶ [未打刻DM一括配信] 配信対象: {} 名への個別リマインド送信を開始します。",
+    log.info("▶ [未打刻DM一括配信] 配信対象: {} 名へのリマインド送信を開始します。",
         event.employees().size());
 
     List<DirectReminderEmployee> successItems = new ArrayList<>();
@@ -83,7 +83,7 @@ public class SendUnstampedDirectReminderService implements SendUnstampedDirectRe
       sendIndividual(emp, sender, successItems, failureItems);
     }
 
-    log.info("✅ [未打刻DM一括配信完了] 成功: {} 件 / 失敗・警告: {} 件",
+    log.info("✅ [未打刻DM一括配信完了] 正常送信: {} 件 / 失敗・スキップ: {} 件",
         successItems.size(), failureItems.size());
 
     // 管理者チャンネルへサマリーレポートを配送
@@ -91,7 +91,7 @@ public class SendUnstampedDirectReminderService implements SendUnstampedDirectRe
   }
 
   /**
-   * 個別従業員への送信を試行し、成功・失敗の各リストへ振り分けます。
+   * 個別従業員への送信を試行し、逆引き不能な場合は管理者宛てにフォールバック送信を行います。
    *
    * @param emp          対象従業員
    * @param sender       送信ゲートウェイ
@@ -105,26 +105,49 @@ public class SendUnstampedDirectReminderService implements SendUnstampedDirectRe
       List<FailureItem> failureItems
   ) {
     try {
-      String lineWorksUserId = lineworksAccountResolver.resolveUserIdFromEmail(emp.email());
-      if (lineWorksUserId.isBlank()) {
-        log.warn("⚠️ LINE WORKS アカウントID導出不可（スキップ）: 社員番号: {}, 氏名: {}",
+      String lineWorksUserId = StringUtils.hasText(emp.email())
+          ? lineworksAccountResolver.resolveUserIdFromEmail(emp.email())
+          : "";
+
+      String baseMessage = reminderMessageFormatter.format(emp);
+
+      if (StringUtils.hasText(lineWorksUserId)) {
+        // 1. 本人宛てに送信
+        Notification notification = new Notification(
+            NotificationChannelType.LINE_WORKS,
+            Notification.DestinationType.USER,
+            lineWorksUserId,
+            baseMessage,
+            LocalDateTime.now()
+        );
+        sender.send(notification);
+        log.info("  └ ✉️ 本人送信成功: {} さん ({})", emp.fullName(), lineWorksUserId);
+        successItems.add(emp);
+
+      } else {
+        // 2. 💡 メール未設定または逆引き不可 ➜ 管理者宛てに代理送信！
+        log.warn(
+            "⚠️ LINE WORKS アカウント解決不可のため、管理者へ代理送信します: 社員番号: {}, 氏名: {}",
             emp.employeeNumber(), emp.fullName());
-        failureItems.add(new FailureItem(emp, "アカウント導出不可（メール不正）"));
-        return;
+
+        String proxyMessage = "📢 【管理者代理通知 / 未打刻リマインド】\n"
+            + "※対象者のLINE WORKSアカウントが解決できない（またはDM無効設定）ため、管理者に代理配信されました。\n\n"
+            + baseMessage;
+
+        // targetId に null を指定すると LineworksNotificationSenderImpl により systemManagerId へ送信される
+        Notification proxyNotification = new Notification(
+            NotificationChannelType.LINE_WORKS,
+            Notification.DestinationType.USER,
+            null,
+            proxyMessage,
+            LocalDateTime.now()
+        );
+        sender.send(proxyNotification);
+        log.info("  └ 🛡️ 管理者へ代理送信完了: {} さん分", emp.fullName());
+
+        // レポート上にも代理送信した旨を記録
+        failureItems.add(new FailureItem(emp, "アカウント解決不可のため管理者へ代理送信"));
       }
-
-      String message = reminderMessageFormatter.format(emp);
-      Notification notification = new Notification(
-          NotificationChannelType.LINE_WORKS,
-          Notification.DestinationType.USER,
-          lineWorksUserId,
-          message,
-          LocalDateTime.now()
-      );
-
-      sender.send(notification);
-      log.info("  └ ✉️ 送信成功: {} さん", emp.fullName());
-      successItems.add(emp);
 
     } catch (Exception e) {
       log.error("❌ 送信失敗: 社員番号: {}, 氏名: {}, 原因: {}",
