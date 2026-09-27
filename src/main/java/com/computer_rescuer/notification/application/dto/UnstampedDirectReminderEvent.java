@@ -9,10 +9,6 @@ import java.util.List;
 
 /**
  * 勤怠管理サービスから受信する「未打刻者本人向けダイレクト通知要求イベント」のデータ転送オブジェクト（DTO）。
- * <p>
- * 始業時刻を過ぎても打刻が確認できない従業員本人へ、LINE WORKS の個別 DM を一括送信するための情報を保持します。<br>
- * 受信者側の心理的負担を考慮し、累積回数や予定時刻などの追及的パラメータは排斥し、 本人特定と呼びかけに必要な最小限の業務データ（社員番号、メールアドレス、氏名）のみをカプセル化します。
- * </p>
  *
  * @param employees 個別リマインド送信の対象となる従業員リスト（1件以上必須）
  */
@@ -26,7 +22,7 @@ public record UnstampedDirectReminderEvent(
    * ダイレクト通知の対象となる個別従業員の業務情報を保持する不変レコード。
    *
    * @param employeeNumber 自社システムにおける従業員番号（必須・追跡監査用キー）
-   * @param email          社用メールアドレス（必須・LINE WORKS アカウント導出用キー）
+   * @param email          社用メールアドレス（任意・未設定時は管理者宛てに代理送信）
    * @param fullName       従業員の氏名（必須・メッセージ本文の宛名呼びかけ用）
    */
   public record DirectReminderEmployee(
@@ -34,13 +30,13 @@ public record UnstampedDirectReminderEvent(
       @JsonProperty("employee_number")
       String employeeNumber,
 
-      @NotBlank(message = "メールアドレスは必須です")
+      // 💡 @NotBlank を削除！null や空文字でも DLT 送りにせず正常受信させる
       @Email(message = "正しいメールアドレス形式で入力してください")
       @JsonProperty("email")
       String email,
 
       @NotBlank(message = "氏名は必須です")
-      @JsonProperty("full_name")
+      @JsonProperty("fullName")
       String fullName
   ) {
 
