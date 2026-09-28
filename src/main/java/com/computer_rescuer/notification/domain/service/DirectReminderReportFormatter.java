@@ -20,7 +20,8 @@ public class DirectReminderReportFormatter {
    * @param failureItems 送信に失敗またはスキップされた障害情報のリスト
    * @return フォーマット済みの管理者向けレポート本文文字列
    */
-  public String format(List<DirectReminderEmployee> successItems, List<FailureItem> failureItems) {
+  public String format(List<DirectReminderEmployee> successItems, List<FailureItem> failureItems,
+      boolean isProxy) {
     StringBuilder sb = new StringBuilder();
     sb.append("📢 【未打刻DM 配信結果レポート】\n");
     sb.append("未打刻者本人への個別リマインドDMの送信が完了しました。\n");
@@ -46,6 +47,9 @@ public class DirectReminderReportFormatter {
       sb.append("\n※失敗対象がある場合は、LINE WORKS の登録状況やログをご確認ください。");
     } else {
       sb.append("※全対象者へのダイレクト通知が正常に完了しました。");
+    }
+    if (isProxy) {
+      sb.append("\n※DM機能は無効となっております。送信成功はすべて管理者へ送信しております。");
     }
 
     return sb.toString();

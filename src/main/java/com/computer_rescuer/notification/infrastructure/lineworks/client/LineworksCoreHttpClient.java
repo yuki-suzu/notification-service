@@ -114,4 +114,41 @@ public class LineworksCoreHttpClient {
       throw new RuntimeException("LINE WORKS API (" + apiName + ") の通信エラー", e);
     }
   }
+
+  /**
+   * 指定されたエンドポイントに対して GET リクエストを送信し、結果をデシリアライズします。
+   * <p>
+   * 401 エラー発生時はトークンを再取得して 1 度だけ自動リトライします。 404 エラー等の特定ステータスは呼び出し元でハンドリングできるよう例外を再スローします。
+   * </p>
+   *
+   * @param <T>          レスポンスの型
+   * @param path         API エンドポイントパス
+   * @param responseType マッピング先のクラス型
+   * @param apiName      ログ出力用の API 識別名
+   * @return デシリアライズされたレスポンスオブジェクト
+   */
+  public <T> T get(String path, Class<T> responseType, String apiName) {
+    String token = tokenManager.getToken();
+
+    try {
+      return executeGet(token, path, responseType, apiName);
+    } catch (HttpClientErrorException.Unauthorized e) {
+      log.warn(
+          "🚨 [LINE WORKS {}] 401 Unauthorized エラーを検知。トークンを再取得してリトライします。",
+          apiName);
+      String newToken = tokenManager.refreshToken();
+      return executeGet(newToken, path, responseType, apiName + " (リトライ)");
+    }
+  }
+
+  private <T> T executeGet(String token, String path, Class<T> responseType, String apiName) {
+    log.debug("▶︎ [LINE WORKS {} Request]: URI={}", apiName, path);
+
+    return restClient.get()
+        .uri(path)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+        .accept(MediaType.APPLICATION_JSON)
+        .retrieve()
+        .body(responseType);
+  }
 }
