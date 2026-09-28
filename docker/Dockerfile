@@ -28,8 +28,16 @@ FROM eclipse-temurin:25-jre
 WORKDIR /app
 
 # compose.yaml のヘルスチェック実行に必要な curl を導入
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
+# ついでに New Relic Agent をダウンロード！
+RUN apt-get update && apt-get install -y --no-install-recommends curl unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# 💡 最新の New Relic Java Agent を公式から取得して配置
+# （Java 25 対応の最新 8.x 系を取得）
+RUN mkdir -p /app/newrelic \
+    && curl -O https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip \
+    && unzip newrelic-java.zip -d /app \
+    && rm newrelic-java.zip
 
 # タイムゾーンを東京に設定
 ENV TZ=Asia/Tokyo
