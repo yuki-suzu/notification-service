@@ -36,7 +36,7 @@ public record UnstampedDirectReminderEvent(
       String email,
 
       @NotBlank(message = "氏名は必須です")
-      @JsonProperty("fullName")
+      @JsonProperty("full_name")
       String fullName
   ) {
 
