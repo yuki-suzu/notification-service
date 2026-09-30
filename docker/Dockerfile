@@ -32,12 +32,17 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# 💡 最新の New Relic Java Agent を公式から取得して配置
+# 最新の New Relic Java Agent を公式から取得して配置
 # （Java 25 対応の最新 8.x 系を取得）
 RUN mkdir -p /app/newrelic \
     && curl -O https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip \
     && unzip newrelic-java.zip -d /app \
     && rm newrelic-java.zip
+
+# OpenTelemetry Java Agent をダウンロード
+RUN mkdir -p /app/otel \
+    && curl -L -o /app/otel/opentelemetry-javaagent.jar \
+       https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 
 # タイムゾーンを東京に設定
 ENV TZ=Asia/Tokyo
